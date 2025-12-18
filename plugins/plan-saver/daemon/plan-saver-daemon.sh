@@ -60,6 +60,55 @@ wait_for_stable_file() {
   return 1
 }
 
+# Refresh session slugs by reading JSONL files
+# This fixes the race condition where sessions are registered before slugs are available
+refresh_session_slugs() {
+  if [[ ! -f "$SESSIONS_FILE" ]]; then
+    return 0
+  fi
+
+  local PROJECTS_DIR="$HOME/.claude/projects"
+  local UPDATED=false
+
+  # Get all sessions with empty slugs
+  local SESSION_IDS
+  SESSION_IDS=$(jq -r '.sessions | to_entries[] | select(.value.slug == "") | .key' "$SESSIONS_FILE" 2>/dev/null)
+
+  for SESSION_ID in $SESSION_IDS; do
+    # Get the cwd for this session
+    local CWD
+    CWD=$(jq -r --arg id "$SESSION_ID" '.sessions[$id].cwd // empty' "$SESSIONS_FILE" 2>/dev/null)
+    if [[ -z "$CWD" ]]; then
+      continue
+    fi
+
+    # Convert cwd to encoded path (replace / with -)
+    local ENCODED_CWD="${CWD//\//-}"
+    local SESSION_FILE="$PROJECTS_DIR/$ENCODED_CWD/${SESSION_ID}.jsonl"
+
+    if [[ ! -f "$SESSION_FILE" ]]; then
+      continue
+    fi
+
+    # Extract slug from the JSONL file (appears on user messages)
+    local SLUG
+    SLUG=$(grep -m1 '"slug"' "$SESSION_FILE" 2>/dev/null | jq -r '.slug // empty' 2>/dev/null || true)
+
+    if [[ -n "$SLUG" ]]; then
+      log "Updating session $SESSION_ID with slug: $SLUG"
+      # Update sessions.json with the found slug
+      local TEMP_FILE="${SESSIONS_FILE}.tmp.$$"
+      jq --arg id "$SESSION_ID" --arg slug "$SLUG" \
+        '.sessions[$id].slug = $slug' "$SESSIONS_FILE" > "$TEMP_FILE" && mv "$TEMP_FILE" "$SESSIONS_FILE"
+      UPDATED=true
+    fi
+  done
+
+  if [[ "$UPDATED" == "true" ]]; then
+    log "Session slugs refreshed"
+  fi
+}
+
 # Find the target directory for a plan based on its slug
 find_target_cwd() {
   local SLUG="$1"
@@ -131,6 +180,9 @@ process_plan() {
   SLUG=$(echo "$BASENAME" | sed 's/-agent-[a-f0-9]*\.md$//' | sed 's/\.md$//')
 
   log "Slug: $SLUG"
+
+  # Refresh session slugs before matching (fixes race condition)
+  refresh_session_slugs
 
   # Find target directory
   local TARGET_CWD
