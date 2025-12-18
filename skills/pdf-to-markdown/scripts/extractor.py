@@ -1,7 +1,5 @@
 """
-PDF extraction with multiple backends:
-- Fast mode: PyMuPDF with multi-strategy table detection (good for simple tables)
-- Accurate mode: IBM Docling with TableFormer AI (better for complex/borderless tables)
+PDF extraction using IBM Docling with TableFormer AI for high-accuracy table extraction.
 """
 
 import os
@@ -14,15 +12,8 @@ os.environ.setdefault("PYMUPDF_SUGGEST_LAYOUT_ANALYZER", "0")
 
 # Version for cache invalidation - increment when extraction logic changes
 # Format: major.minor.patch
-# 3.1.0: Page separators now use <!-- PAGE_BREAK --> instead of -----
-#        Image extraction includes nested XObjects (full=True)
-# 3.2.0: Fast mode now includes image references in markdown (write_images=True)
-#        Cache keys now include no_images flag to avoid contamination
-# 3.3.0: Image paths in cached markdown now use relative 'images/' prefix
-#        (fixes broken temp directory references in cached output)
-# 3.4.0: Image filenames now prefixed with cache_key[:8] to prevent clashes
-#        when multiple PDFs are converted to the same output folder
-EXTRACTOR_VERSION = "3.4.0"
+# 4.0.0: Removed fast mode (pymupdf4llm), docling is now the only extraction path
+EXTRACTOR_VERSION = "4.0.0"
 
 
 def check_docling_models():
@@ -36,70 +27,6 @@ def check_docling_models():
         return len(docling_repos) > 0
     except Exception:
         return False
-
-
-def extract_pdf_fast(
-    pdf_path: str, image_dir: str = None, show_progress: bool = False, image_prefix: str = ""
-) -> str:
-    """
-    Fast PDF extraction using PyMuPDF with text-based table detection.
-
-    Uses 'text' table strategy which handles borderless/whitespace-based
-    tables better than the default 'lines_strict' for mixed document types.
-
-    Args:
-        pdf_path: Path to the PDF file
-        image_dir: Directory to save extracted images (None = skip images)
-        show_progress: Whether to show progress output
-        image_prefix: Prefix for image filenames (prevents clashes between PDFs)
-
-    Returns:
-        Markdown string of the PDF content with image references if image_dir provided
-    """
-    import pymupdf4llm
-
-    if show_progress:
-        print("Extracting with PyMuPDF (fast mode)...", file=sys.stderr)
-
-    # Use text strategy which handles borderless tables better
-    # than the default lines_strict
-    markdown = pymupdf4llm.to_markdown(
-        pdf_path,
-        show_progress=show_progress,
-        table_strategy="text",  # Better for mixed table types
-        write_images=image_dir is not None,
-        image_path=image_dir,
-    )
-
-    # Replace pymupdf4llm's default page separator with explicit sentinel.
-    # This prevents false splits when documents contain literal "-----"
-    # (horizontal rules, ASCII tables, etc.)
-    markdown = markdown.replace("\n-----\n", "\n<!-- PAGE_BREAK -->\n")
-
-    # Rename images with prefix to prevent clashes between PDFs
-    if image_dir and image_prefix:
-        markdown = _rename_images_with_prefix(Path(image_dir), image_prefix, markdown)
-
-    return markdown
-
-
-def _rename_images_with_prefix(image_dir: Path, prefix: str, markdown: str) -> str:
-    """Rename images in directory to include prefix and update markdown references."""
-    if not image_dir.exists():
-        return markdown
-
-    for img_file in sorted(image_dir.iterdir()):
-        if img_file.suffix.lower() in (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"):
-            old_name = img_file.name
-            new_name = f"{prefix}_{old_name}"
-            new_path = img_file.parent / new_name
-            img_file.rename(new_path)
-            # Update markdown references (handles both bare and images/ prefixed paths)
-            markdown = markdown.replace(f"]({old_name})", f"]({new_name})")
-            markdown = markdown.replace(f"](images/{old_name})", f"](images/{new_name})")
-            markdown = markdown.replace(f"]({image_dir}/{old_name})", f"]({image_dir}/{new_name})")
-
-    return markdown
 
 
 def _save_docling_images(result, output_dir: Path, prefix: str = "") -> list:
@@ -168,7 +95,7 @@ def extract_pdf_docling(
 
     if show_progress:
         print(
-            f"Processing PDF with Docling (accurate mode, ~1 sec/page)...",
+            f"Processing PDF with Docling (~1 sec/page)...",
             file=sys.stderr,
         )
 
@@ -206,7 +133,9 @@ def extract_pdf_docling(
     # Save images to output directory (order matters for placeholder replacement)
     image_paths = []
     if output_dir:
-        image_paths = _save_docling_images(result, Path(output_dir), prefix=image_prefix)
+        image_paths = _save_docling_images(
+            result, Path(output_dir), prefix=image_prefix
+        )
         if show_progress and image_paths:
             print(
                 f"Extracted {len(image_paths)} images at {images_scale}x resolution",
@@ -221,31 +150,6 @@ def extract_pdf_docling(
         md = md.replace("<!-- image -->", f"![Figure](images/{Path(img_path).name})", 1)
 
     return md, image_paths
-
-
-def extract_pdf_to_markdown(
-    pdf_path: str, accurate: bool = False, show_progress: bool = False
-) -> str:
-    """
-    Extract PDF to markdown with configurable accuracy/speed trade-off.
-
-    Args:
-        pdf_path: Path to the PDF file
-        accurate: If True, use Docling AI (better for complex tables, slower).
-                  If False, use PyMuPDF (fast, good for simple tables).
-        show_progress: Whether to show progress output
-
-    Returns:
-        Markdown string of the PDF content
-    """
-    if accurate:
-        # Use Docling without image extraction
-        md, _ = extract_pdf_docling(
-            pdf_path, output_dir=None, show_progress=show_progress
-        )
-        return md
-    else:
-        return extract_pdf_fast(pdf_path, show_progress)
 
 
 def get_page_count(pdf_path: str) -> int:

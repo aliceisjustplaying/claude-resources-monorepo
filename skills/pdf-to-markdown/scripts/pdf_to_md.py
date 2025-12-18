@@ -2,7 +2,7 @@
 """
 PDF to Markdown Converter for LLM Context
 
-Extracts entire PDF content as clean, structured markdown.
+Extracts entire PDF content as clean, structured markdown using IBM Docling.
 Images are extracted to cache directory and copied to output location.
 
 Features:
@@ -12,13 +12,11 @@ Features:
 
 Usage:
     python pdf_to_md.py <input.pdf> [output.md]
-    python pdf_to_md.py <input.pdf> --docling      # Accurate tables (slower)
     python pdf_to_md.py <input.pdf> --clear-cache  # Re-extract
     python pdf_to_md.py --clear-all-cache          # Clear entire cache
 
 Dependencies:
-    uv pip install pymupdf pymupdf4llm   # Fast mode
-    uv pip install docling docling-core  # Docling mode (optional)
+    uv pip install pymupdf docling docling-core
 """
 
 import argparse
@@ -44,7 +42,6 @@ class ExtractionConfig:
     """Configuration for PDF extraction."""
 
     pdf_path: str
-    docling: bool = False
     images_scale: float = 4.0
 
 
@@ -77,7 +74,7 @@ class CacheManager:
         self.cache_dir = cache_dir or DEFAULT_CACHE_DIR
 
     def get_key(self, config: ExtractionConfig) -> str:
-        """Generate cache key from file content + size + mode."""
+        """Generate cache key from file content + size."""
         p = Path(config.pdf_path).resolve()
         stat = p.stat()
         file_size = stat.st_size
@@ -93,7 +90,7 @@ class CacheManager:
                 f.seek(-chunk_size, 2)
                 hasher.update(f.read(chunk_size))
 
-        mode = f"docling_{config.images_scale}" if config.docling else "fast"
+        mode = f"docling_{config.images_scale}"
         raw = f"{file_size}|{hasher.hexdigest()}|{mode}"
         return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
@@ -217,7 +214,7 @@ class CacheManager:
 
         p = Path(config.pdf_path).resolve()
         stat = p.stat()
-        mode = f"docling_{config.images_scale}" if config.docling else "fast"
+        mode = f"docling_{config.images_scale}"
 
         metadata = {
             "source_path": str(p),
@@ -228,7 +225,7 @@ class CacheManager:
             "total_pages": result.total_pages,
             "extractor_version": EXTRACTOR_VERSION,
             "mode": mode,
-            "images_scale": config.images_scale if config.docling else None,
+            "images_scale": config.images_scale,
         }
 
         temp_md = None
@@ -275,21 +272,18 @@ class CacheManager:
                 os.unlink(temp_json)
 
     def clear(self, pdf_path: str = None) -> bool:
-        """Clear cache for specific PDF (both fast and docling modes) or entire cache."""
+        """Clear cache for specific PDF or entire cache."""
         if pdf_path:
-            # Clear BOTH fast and docling caches for this PDF
-            cleared = False
-            for docling_mode in [False, True]:
-                try:
-                    config = ExtractionConfig(pdf_path=pdf_path, docling=docling_mode)
-                    cache_key = self.get_key(config)
-                    cache_dir = self._get_dir(cache_key)
-                    if cache_dir.exists():
-                        shutil.rmtree(cache_dir)
-                        cleared = True
-                except (FileNotFoundError, OSError):
-                    pass
-            return cleared
+            try:
+                config = ExtractionConfig(pdf_path=pdf_path)
+                cache_key = self.get_key(config)
+                cache_dir = self._get_dir(cache_key)
+                if cache_dir.exists():
+                    shutil.rmtree(cache_dir)
+                    return True
+            except (FileNotFoundError, OSError):
+                pass
+            return False
         else:
             if self.cache_dir.exists():
                 shutil.rmtree(self.cache_dir)
@@ -359,7 +353,14 @@ class ImageManager:
         images = []
 
         for img_path in sorted(image_dir.glob("*")):
-            if img_path.suffix.lower() in (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"):
+            if img_path.suffix.lower() in (
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".gif",
+                ".bmp",
+                ".webp",
+            ):
                 if referenced_only is not None and img_path.name not in referenced_only:
                     continue
 
@@ -369,18 +370,21 @@ class ImageManager:
 
                     try:
                         import pymupdf
+
                         pix = pymupdf.Pixmap(str(img_path))
                         dimensions = f"{pix.width}x{pix.height}"
                         pix = None
                     except Exception:
                         dimensions = "unknown"
 
-                    images.append({
-                        "filename": img_path.name,
-                        "path": str(img_path),
-                        "size_kb": round(size_kb, 1),
-                        "dimensions": dimensions,
-                    })
+                    images.append(
+                        {
+                            "filename": img_path.name,
+                            "path": str(img_path),
+                            "size_kb": round(size_kb, 1),
+                            "dimensions": dimensions,
+                        }
+                    )
                 except Exception:
                     pass
 
@@ -407,6 +411,7 @@ class ImageManager:
                     size_kb = round(full_path.stat().st_size / 1024, 1)
                     try:
                         import pymupdf
+
                         pix = pymupdf.Pixmap(str(full_path))
                         dims = f"{pix.width}x{pix.height}"
                         pix = None
@@ -446,7 +451,11 @@ class ImageManager:
         return "\n".join(lines)
 
     def finalize_images(
-        self, temp_dir: Path, cache_dir: Path, output_path: Path, show_progress: bool = False
+        self,
+        temp_dir: Path,
+        cache_dir: Path,
+        output_path: Path,
+        show_progress: bool = False,
     ) -> Path | None:
         """Finalize image directory after extraction.
 
@@ -478,7 +487,9 @@ class ImageManager:
         if cache_dir:
             cached_image_dir = cache_dir / "images"
             if cached_image_dir.exists() and any(cached_image_dir.iterdir()):
-                return self._copy_images_to_output(cached_image_dir, output_path, show_progress)
+                return self._copy_images_to_output(
+                    cached_image_dir, output_path, show_progress
+                )
 
         return None
 
@@ -507,7 +518,9 @@ class ImageManager:
                 copied_count += 1
 
         if show_progress and copied_count > 0:
-            print(f"Copied {copied_count} images to: {output_images_dir}", file=sys.stderr)
+            print(
+                f"Copied {copied_count} images to: {output_images_dir}", file=sys.stderr
+            )
 
         return output_images_dir
 
@@ -517,7 +530,7 @@ class ImageManager:
 # =============================================================================
 
 
-def check_dependencies(docling_mode: bool = False):
+def check_dependencies():
     """Check if required packages are installed."""
     missing = []
 
@@ -526,57 +539,40 @@ def check_dependencies(docling_mode: bool = False):
     except ImportError:
         missing.append("pymupdf")
 
-    if docling_mode:
-        try:
-            import docling
-        except ImportError:
-            missing.append("docling")
+    try:
+        import docling
+    except ImportError:
+        missing.append("docling")
 
-        try:
-            import docling_core
-        except ImportError:
-            missing.append("docling-core")
-
-        install_cmd = "uv pip install pymupdf docling docling-core"
-    else:
-        try:
-            import pymupdf4llm
-        except ImportError:
-            missing.append("pymupdf4llm")
-
-        install_cmd = "uv pip install pymupdf pymupdf4llm"
+    try:
+        import docling_core
+    except ImportError:
+        missing.append("docling-core")
 
     if missing:
         print(f"ERROR: Missing dependencies: {', '.join(missing)}", file=sys.stderr)
-        print(f"Install with: {install_cmd}", file=sys.stderr)
+        print(
+            "Install with: uv pip install pymupdf docling docling-core", file=sys.stderr
+        )
         return False
 
     return True
 
 
-def convert_pdf(pdf_path, image_dir, show_progress=False, docling=False, images_scale=4.0, image_prefix=""):
-    """Convert PDF to markdown."""
-    if docling:
-        from extractor import extract_pdf_docling
+def convert_pdf(
+    pdf_path, image_dir, show_progress=False, images_scale=4.0, image_prefix=""
+):
+    """Convert PDF to markdown using Docling."""
+    from extractor import extract_pdf_docling
 
-        markdown, _image_paths = extract_pdf_docling(
-            pdf_path,
-            output_dir=image_dir,
-            images_scale=images_scale,
-            show_progress=show_progress,
-            image_prefix=image_prefix,
-        )
-        return markdown
-    else:
-        from extractor import extract_pdf_fast
-
-        markdown = extract_pdf_fast(
-            pdf_path,
-            image_dir=image_dir,
-            show_progress=show_progress,
-            image_prefix=image_prefix,
-        )
-        return markdown
+    markdown, _image_paths = extract_pdf_docling(
+        pdf_path,
+        output_dir=image_dir,
+        images_scale=images_scale,
+        show_progress=show_progress,
+        image_prefix=image_prefix,
+    )
+    return markdown
 
 
 def add_metadata_header(markdown, pdf_path, total_pages, image_dir=None, cached=False):
@@ -615,27 +611,23 @@ def main():
 Examples:
   python pdf_to_md.py document.pdf                    # Output to document.md (cached)
   python pdf_to_md.py document.pdf output.md         # Custom output path
-  python pdf_to_md.py document.pdf --docling         # Accurate tables (slower)
   python pdf_to_md.py document.pdf --clear-cache     # Clear cache and re-extract
   python pdf_to_md.py --clear-all-cache              # Clear entire cache
 
 Caching:
   PDFs are cached in ~/.cache/pdf-to-markdown/
-  Cache is keyed by file content hash + extraction mode.
+  Cache is keyed by file content hash.
   Cache persists until explicitly cleared or source PDF changes.
         """,
     )
 
     parser.add_argument("input", nargs="?", help="Input PDF file path")
-    parser.add_argument("output", nargs="?", help="Output markdown file path (default: <input>.md)")
     parser.add_argument(
-        "--docling",
-        "--accurate",
-        action="store_true",
-        dest="docling",
-        help="Use Docling AI for complex/borderless tables (slower, ~1 sec/page)",
+        "output", nargs="?", help="Output markdown file path (default: <input>.md)"
     )
-    parser.add_argument("--no-progress", action="store_true", help="Disable progress indicator")
+    parser.add_argument(
+        "--no-progress", action="store_true", help="Disable progress indicator"
+    )
 
     # Cache options
     parser.add_argument(
@@ -648,7 +640,9 @@ Caching:
         action="store_true",
         help="Clear entire cache directory and exit",
     )
-    parser.add_argument("--cache-stats", action="store_true", help="Show cache statistics and exit")
+    parser.add_argument(
+        "--cache-stats", action="store_true", help="Show cache statistics and exit"
+    )
 
     args = parser.parse_args()
 
@@ -691,17 +685,17 @@ Caching:
     show_progress = sys.stderr.isatty() and not args.no_progress
 
     # Check cache
-    config = ExtractionConfig(pdf_path=args.input, docling=args.docling)
+    config = ExtractionConfig(pdf_path=args.input)
     valid, cache_key = cache_mgr.is_valid(config)
 
     result = None
     image_dir = None
     cache_hit = False
+    total_pages = 0
 
     if valid:
         if show_progress:
-            mode = "docling" if args.docling else "fast"
-            print(f"Loading from cache ({mode} mode)...", file=sys.stderr)
+            print("Loading from cache...", file=sys.stderr)
 
         cache_result = cache_mgr.load(cache_key)
         if cache_result:
@@ -719,7 +713,7 @@ Caching:
 
     # Extract if no cache hit
     if not cache_hit:
-        if not check_dependencies(docling_mode=args.docling):
+        if not check_dependencies():
             sys.exit(1)
 
         from extractor import get_page_count
@@ -734,22 +728,15 @@ Caching:
 
         try:
             if show_progress:
-                if args.docling:
-                    print(
-                        f"Extracting {total_pages} pages with Docling AI (~1 sec/page)...",
-                        file=sys.stderr,
-                    )
-                else:
-                    print(
-                        f"Extracting {total_pages} pages with PyMuPDF (fast mode)...",
-                        file=sys.stderr,
-                    )
+                print(
+                    f"Extracting {total_pages} pages with Docling AI (~1 sec/page)...",
+                    file=sys.stderr,
+                )
 
             result = convert_pdf(
                 args.input,
                 image_dir=temp_image_dir,
                 show_progress=show_progress,
-                docling=args.docling,
                 image_prefix=cache_key[:8],
             )
         except Exception as e:
@@ -780,15 +767,21 @@ Caching:
     output = result
     img_mgr_for_output = ImageManager()  # Fresh instance for output processing
 
-    referenced_images = img_mgr_for_output.extract_references(result) if result else set()
+    referenced_images = (
+        img_mgr_for_output.extract_references(result) if result else set()
+    )
 
     if image_dir:
         output = img_mgr_for_output.enhance_markdown(output, image_dir)
-        images = img_mgr_for_output.get_info(image_dir, referenced_only=referenced_images)
+        images = img_mgr_for_output.get_info(
+            image_dir, referenced_only=referenced_images
+        )
         if images:
             output += img_mgr_for_output.create_summary(images)
 
-    output = add_metadata_header(output, args.input, total_pages, image_dir, cached=cache_hit)
+    output = add_metadata_header(
+        output, args.input, total_pages, image_dir, cached=cache_hit
+    )
 
     # Write output
     output_path = args.output or os.path.splitext(args.input)[0] + ".md"
@@ -799,7 +792,9 @@ Caching:
     if cache_hit:
         msg += " (from cache)"
     if image_dir:
-        images = img_mgr_for_output.get_info(image_dir, referenced_only=referenced_images)
+        images = img_mgr_for_output.get_info(
+            image_dir, referenced_only=referenced_images
+        )
         if images:
             msg += f" ({len(images)} images)"
     print(msg, file=sys.stderr)
