@@ -1,0 +1,11 @@
+{
+  "name": "plan-saver",
+  "version": "2.0.0",
+  "description": "Automatically saves plans from plan mode to your repo's .claude/plans/ directory with numbered filenames",
+  "author": {
+    "name": "Alice"
+  },
+  "repository": "https://github.com/alice/claude-code-skills-monorepo",
+  "license": "MIT",
+  "keywords": ["plans", "plan-mode", "workflow"]
+}
