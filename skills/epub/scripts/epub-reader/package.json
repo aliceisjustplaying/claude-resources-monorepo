@@ -1,0 +1,23 @@
+{
+  "name": "epub-reader",
+  "version": "1.0.0",
+  "description": "CLI tool for reading EPUB files and extracting content as Markdown",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "turndown": "^7.2.0",
+    "jszip": "^3.10.1",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/turndown": "^5.0.5",
+    "@types/xml2js": "^0.4.14",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output - keep dist/ tracked since it's needed for the skill to work
+# dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
