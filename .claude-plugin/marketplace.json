@@ -1,0 +1,13 @@
+{
+  "name": "alice-marketplace",
+  "owner": {
+    "name": "Alice"
+  },
+  "plugins": [
+    {
+      "name": "plan-saver",
+      "source": "./plugins/plan-saver",
+      "description": "Automatically saves plans from plan mode to your repo's .claude/plans/ with numbered filenames"
+    }
+  ]
+}
