@@ -4,10 +4,10 @@ A centralized repository for Claude Code extensions including skills, commands, 
 
 ## Features
 
+- **Skills** - EPUB reader and PDF-to-Markdown converter for document processing
 - **Plan Saver Plugin** - Automatically saves and distributes plans from Claude Code's plan mode to their respective project directories
 - **Slash Commands** - Custom commands like `/latest-plan` for quick access to recent work
 - **Utility Scripts** - Standalone scripts for plan management and other automation
-- **Skills** - Reusable skill definitions for Claude Code
 
 ## Installation
 
@@ -61,6 +61,33 @@ plugins/plan-saver/status.sh
 plugins/plan-saver/uninstall.sh
 ```
 
+### Skills
+
+#### epub
+
+Read and extract content from EPUB ebook files.
+
+**Capabilities:**
+- View metadata (title, author, publisher, description)
+- List table of contents with chapter references
+- Read specific chapters by number
+- Extract entire book as Markdown
+- Search text with context
+
+**Requirements:** Node.js, built with `bun install && bun run build` in `skills/epub/scripts/epub-reader/`
+
+#### pdf-to-markdown
+
+Convert PDF documents to clean, structured Markdown for full context loading.
+
+**Capabilities:**
+- Text extraction with formatting preservation (headers, bold, italic, lists)
+- Table extraction using IBM's TableFormer AI (~93.6% accuracy)
+- Image extraction with caching
+- Multi-column layout support
+
+**Requirements:** Python 3.11+, virtual environment created automatically on first use
+
 ### Commands
 
 | Command | Description |
@@ -84,7 +111,15 @@ claude-code-skills-monorepo/
 ├── scripts/                     # Utility scripts
 │   ├── latest-plan.sh
 │   └── save-plan.sh
-├── skills/                      # Skill definitions (add yours here)
+├── skills/                      # Claude Code skills
+│   ├── epub/                    # EPUB reader (TypeScript)
+│   │   ├── SKILL.md
+│   │   ├── README.md
+│   │   └── scripts/epub-reader/
+│   └── pdf-to-markdown/         # PDF converter (Python)
+│       ├── SKILL.md
+│       ├── README.md
+│       └── scripts/
 ├── plugins/
 │   └── plan-saver/
 │       ├── daemon/
@@ -142,6 +177,8 @@ All shell scripts in this repository follow these standards:
 - macOS (for launchd-based daemon)
 - Homebrew (for dependency installation)
 - Claude Code CLI
+- Node.js / Bun (for epub skill)
+- Python 3.11+ (for pdf-to-markdown skill)
 
 ## Troubleshooting
 
