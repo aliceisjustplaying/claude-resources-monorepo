@@ -1,13 +1,11 @@
 # PDF to Markdown Converter
 
-Convert PDF documents to clean, structured Markdown with table and image extraction.
+Convert PDF documents to clean, structured Markdown using IBM Docling AI with high-accuracy table and image extraction.
 
 ## Features
 
 - **Text extraction** with formatting preservation (headers, bold, italic, lists)
-- **Table extraction** with two modes:
-  - Fast mode: PyMuPDF (good for simple tables)
-  - Accurate mode: IBM Docling AI (better for complex/borderless tables)
+- **Table extraction** using IBM's TableFormer AI model (~93.6% accuracy)
 - **Image extraction** to cache directory with paths in output
 - **Aggressive caching** - extract once, reuse forever
 
@@ -16,11 +14,6 @@ Convert PDF documents to clean, structured Markdown with table and image extract
 ```bash
 cd ~/.claude/skills/pdf-to-markdown
 uv venv .venv
-
-# For fast mode (default):
-uv pip install --python .venv/bin/python pymupdf pymupdf4llm
-
-# For --docling mode (high-accuracy tables):
 uv pip install --python .venv/bin/python pymupdf docling docling-core
 ```
 
@@ -30,9 +23,6 @@ uv pip install --python .venv/bin/python pymupdf docling docling-core
 # Basic conversion (outputs to document.md)
 .venv/bin/python scripts/pdf_to_md.py document.pdf
 
-# High-accuracy tables (slower)
-.venv/bin/python scripts/pdf_to_md.py document.pdf --docling
-
 # Custom output path
 .venv/bin/python scripts/pdf_to_md.py document.pdf output.md
 ```
@@ -41,7 +31,6 @@ uv pip install --python .venv/bin/python pymupdf docling docling-core
 
 | Option | Description |
 |--------|-------------|
-| `--docling` | Use Docling AI for high-accuracy tables |
 | `--no-progress` | Disable progress indicator |
 | `--clear-cache` | Clear cache for this PDF and re-extract |
 | `--clear-all-cache` | Clear entire cache |
@@ -52,7 +41,7 @@ uv pip install --python .venv/bin/python pymupdf docling docling-core
 ```
 scripts/
   pdf_to_md.py    # Main CLI tool
-  extractor.py    # PDF extraction library (fast + accurate modes)
+  extractor.py    # PDF extraction using Docling
 ```
 
 ## Cache

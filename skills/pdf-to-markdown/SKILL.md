@@ -5,10 +5,10 @@ description: Convert entire PDF documents to clean, structured Markdown for full
 
 # PDF to Markdown Converter
 
-Extract complete PDF content as structured Markdown, preserving:
+Extract complete PDF content as structured Markdown using IBM Docling AI, preserving:
 - Headers (detected by font size, converted to # tags)
 - Bold, italic, monospace formatting
-- Tables (converted to Markdown tables)
+- Tables (high-accuracy extraction using TableFormer AI model)
 - Lists (ordered and unordered)
 - Multi-column layouts (correct reading order)
 - Code blocks
@@ -29,22 +29,11 @@ This skill uses a dedicated virtual environment at `~/.claude/skills/pdf-to-mark
 
 ### First-Time Setup (if .venv doesn't exist)
 ```bash
-# For fast mode only (PyMuPDF):
-cd ~/.claude/skills/pdf-to-markdown && uv venv .venv && uv pip install --python .venv/bin/python pymupdf pymupdf4llm
-
-# For --docling mode (high-accuracy tables):
 cd ~/.claude/skills/pdf-to-markdown && uv venv .venv && uv pip install --python .venv/bin/python pymupdf docling docling-core
-
-# Or install everything:
-cd ~/.claude/skills/pdf-to-markdown && uv venv .venv && uv pip install --python .venv/bin/python pymupdf pymupdf4llm docling docling-core
 ```
 
 ### Verify Installation
 ```bash
-# Verify fast mode:
-~/.claude/skills/pdf-to-markdown/.venv/bin/python -c "import pymupdf; import pymupdf4llm; print('OK')"
-
-# Verify docling mode:
 ~/.claude/skills/pdf-to-markdown/.venv/bin/python -c "import pymupdf; import docling; import docling_core; print('OK')"
 ```
 
@@ -63,7 +52,7 @@ When user provides a PDF and wants full content in context:
 
 ### Step 1: Ensure the skill venv exists
 ```bash
-test -d ~/.claude/skills/pdf-to-markdown/.venv || (cd ~/.claude/skills/pdf-to-markdown && uv venv .venv && uv pip install --python .venv/bin/python pymupdf pymupdf4llm)
+test -d ~/.claude/skills/pdf-to-markdown/.venv || (cd ~/.claude/skills/pdf-to-markdown && uv venv .venv && uv pip install --python .venv/bin/python pymupdf docling docling-core)
 ```
 
 ### Step 2: Convert PDF to Markdown
@@ -79,11 +68,11 @@ cat /path/to/document.md
 
 ## Caching
 
-PDFs are **aggressively cached** to avoid re-processing. First extraction is slow, every subsequent request is instant.
+PDFs are **aggressively cached** to avoid re-processing. First extraction is slow (~1 sec/page), every subsequent request is instant.
 
 ### How It Works
 - **Cache location**: `~/.cache/pdf-to-markdown/<cache_key>/`
-- **Cache key**: Based on file content hash + extraction mode
+- **Cache key**: Based on file content hash
 - **Invalidation**: Cache is invalidated when:
   - Source PDF is modified (size or mtime changes)
   - Extractor version changes (automatic re-extraction)
@@ -112,10 +101,10 @@ PDFs are **aggressively cached** to avoid re-processing. First extraction is slo
 ## Image Handling
 
 Images are always extracted. They are:
-1. **Cached** in `~/.cache/pdf-to-markdown/<cache_key>/images/`
-2. **Copied** to `images/` folder next to the output `.md` file
-3. **Referenced** in the markdown with relative paths (`images/filename.png`)
-4. **Summarized** in a table at the end of the document
+- **Cached** in `~/.cache/pdf-to-markdown/<cache_key>/images/`
+- **Copied** to `images/` folder next to the output `.md` file
+- **Referenced** in the markdown with relative paths (`images/filename.png`)
+- **Summarized** in a table at the end of the document
 
 ### Auto-View Behavior for Images
 
@@ -185,7 +174,6 @@ Location: `~/.claude/skills/pdf-to-markdown/scripts/pdf_to_md.py`
 Usage: pdf_to_md.py <input.pdf> [output.md] [options]
 
 Options:
-  --docling         Use Docling AI for high-accuracy tables (~1 sec/page)
   --no-progress     Disable progress indicator
 
 Cache Options:
@@ -194,53 +182,23 @@ Cache Options:
   --cache-stats        Show cache statistics and exit
 ```
 
-## High-Accuracy Mode (Docling)
+## Performance
 
-For PDFs with complex tables that need high accuracy, use the `--docling` flag:
-
-```bash
-~/.claude/skills/pdf-to-markdown/.venv/bin/python \
-    ~/.claude/skills/pdf-to-markdown/scripts/pdf_to_md.py \
-    document.pdf --docling
-```
-
-**When to use `--docling`:**
-- PDF has complex tables (borderless, merged cells, multi-column)
-- Table accuracy is critical (medical data, financial reports)
-- You're seeing garbled table output in default mode
-
-**Trade-offs:**
-- ~1 second per page (vs instant for fast mode)
-- First run downloads AI models (~500MB one-time)
-- Higher-resolution images (4x default)
-
-**Note:** `--accurate` is an alias for `--docling`.
+- **First extraction**: ~1 second per page (Docling AI processing)
+- **First run**: Downloads AI models (~500MB one-time)
+- **Cached extraction**: Instant
+- **High-resolution images**: 4x default resolution for crisp output
 
 ## Troubleshooting
 
-### "No module named pymupdf4llm" or venv doesn't exist
+### "No module named docling" or venv doesn't exist
 Recreate the skill's virtual environment:
 ```bash
-# For fast mode:
-cd ~/.claude/skills/pdf-to-markdown && rm -rf .venv && uv venv .venv && uv pip install --python .venv/bin/python pymupdf pymupdf4llm
-
-# For docling mode:
 cd ~/.claude/skills/pdf-to-markdown && rm -rf .venv && uv venv .venv && uv pip install --python .venv/bin/python pymupdf docling docling-core
 ```
 
 ### Poor extraction quality
-- Try `--docling` for complex tables
-- For scanned PDFs, ensure Tesseract OCR is installed: `brew install tesseract`
+For scanned PDFs, ensure Tesseract OCR is installed: `brew install tesseract`
 
 ### Tables not formatting correctly
-For complex tables, use `--docling` mode which uses IBM's TableFormer AI model.
-
-## Comparison with Other Approaches
-
-| Approach | Use Case | Limitations |
-|----------|----------|-------------|
-| **This skill (pymupdf4llm)** | Full document context with images | Large PDFs may exceed context |
-| **--docling mode** | Complex tables, medical/financial PDFs | Slower (~1 sec/page), larger models |
-| Grepping PDF | Find specific text | Loses structure, no images |
-| Page-by-page extraction | Targeted pages | Manual, loses cross-page context |
-| Read tool on PDF | Quick preview | Limited formatting preservation |
+This skill uses IBM's TableFormer AI model which has ~93.6% accuracy on complex tables. If tables are still garbled, the PDF may have unusual formatting.
