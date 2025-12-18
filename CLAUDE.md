@@ -2,11 +2,15 @@
 
 ## Project Overview
 
-This is a monorepo containing Claude Code skills, commands, scripts, and plugins. The primary component is the **plan-saver** plugin which automatically distributes plans from Claude Code's plan mode to their respective project directories.
+This is a monorepo containing Claude Code skills, commands, scripts, and plugins. Key components include:
+- **Skills** - EPUB reader and PDF-to-Markdown converter
+- **plan-saver plugin** - Automatically distributes plans from Claude Code's plan mode to their respective project directories
 
 ## Tech Stack
 
-- **Shell scripts (Bash)** - All automation and daemon scripts
+- **Shell scripts (Bash)** - Automation, daemon scripts, and utilities
+- **TypeScript/Node.js** - EPUB skill CLI tool
+- **Python** - PDF-to-Markdown skill (uses docling for AI-powered extraction)
 - **jq** - JSON manipulation for session registry
 - **fswatch** - File system monitoring (macOS)
 - **launchd** - Daemon management (macOS)
@@ -14,13 +18,15 @@ This is a monorepo containing Claude Code skills, commands, scripts, and plugins
 ## Project Structure
 
 ```
-├── commands/           # Claude Code slash commands (.md files)
-├── scripts/            # Standalone utility scripts (.sh)
-├── skills/             # Claude Code skills (skill definitions)
-├── plugins/            # Claude Code plugins
-│   └── plan-saver/     # Auto-distributes plans to projects
-├── .claude/plans/      # Example plans for this repo
-└── setup.sh            # Installation script
+├── commands/                    # Claude Code slash commands (.md files)
+├── scripts/                     # Standalone utility scripts (.sh)
+├── skills/                      # Claude Code skills
+│   ├── epub/                    # EPUB ebook reader (TypeScript)
+│   └── pdf-to-markdown/         # PDF to Markdown converter (Python)
+├── plugins/                     # Claude Code plugins
+│   └── plan-saver/              # Auto-distributes plans to projects
+├── .claude/plans/               # Example plans for this repo
+└── setup.sh                     # Installation script
 ```
 
 ## Shell Script Standards
@@ -47,9 +53,34 @@ This is a monorepo containing Claude Code skills, commands, scripts, and plugins
 ## Key Files
 
 - `setup.sh` - Symlinks skills/commands/scripts to `~/.claude/`
+- `skills/epub/SKILL.md` - EPUB skill definition
+- `skills/epub/scripts/epub-reader/src/index.ts` - EPUB reader CLI implementation
+- `skills/pdf-to-markdown/SKILL.md` - PDF skill definition
+- `skills/pdf-to-markdown/scripts/pdf_to_md.py` - PDF converter CLI implementation
 - `plugins/plan-saver/install.sh` - Installs plan-saver daemon
 - `plugins/plan-saver/daemon/plan-saver-daemon.sh` - Main daemon logic
 - `plugins/plan-saver/hooks/hooks.json` - Session lifecycle hooks
+
+## Skills
+
+### epub
+Reads and extracts content from EPUB ebook files. Capabilities include:
+- View metadata (title, author, publisher)
+- List table of contents
+- Read specific chapters
+- Extract entire book as Markdown
+- Search text with context
+
+**Tech:** TypeScript CLI using commander, jszip, xml2js, turndown
+
+### pdf-to-markdown
+Converts PDF documents to structured Markdown. Capabilities include:
+- Text extraction with formatting preservation
+- Table extraction using IBM's TableFormer AI
+- Image extraction with caching
+- Multi-column layout support
+
+**Tech:** Python using docling for AI-powered document understanding
 
 ## Adding New Components
 
