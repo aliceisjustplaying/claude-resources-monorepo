@@ -26,8 +26,17 @@ HANDOFF_FILE="$CWD/.claude/handoff.md"
 log "Checking for: $HANDOFF_FILE"
 
 if [[ -f "$HANDOFF_FILE" ]]; then
-  log "Found handoff file, outputting prompt"
-  echo "A handoff file exists from a previous session. Read .claude/handoff.md and continue that work. After you've fully absorbed the context, delete the handoff file."
+  log "Found handoff file, outputting JSON context"
+  cat << 'EOF'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "A handoff file exists from a previous session. Read .claude/handoff.md and continue that work. After you've fully absorbed the context, delete the handoff file."
+  }
+}
+EOF
 else
   log "No handoff file found"
 fi
+
+exit 0
