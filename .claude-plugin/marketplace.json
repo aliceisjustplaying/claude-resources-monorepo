@@ -8,6 +8,11 @@
       "name": "plan-saver",
       "source": "./plugins/plan-saver",
       "description": "Automatically saves plans from plan mode to your repo's .claude/plans/ with numbered filenames"
+    },
+    {
+      "name": "handoff",
+      "source": "./plugins/handoff",
+      "description": "Automatically detects handoff files and prompts Claude to continue previous work"
     }
   ]
 }
