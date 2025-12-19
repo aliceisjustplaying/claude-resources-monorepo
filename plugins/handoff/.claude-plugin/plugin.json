@@ -1,0 +1,10 @@
+{
+  "name": "handoff",
+  "version": "1.0.0",
+  "description": "Automatically detects handoff files and prompts Claude to continue previous work",
+  "author": {
+    "name": "Alice"
+  },
+  "license": "MIT",
+  "keywords": ["handoff", "session", "continuity", "context"]
+}
