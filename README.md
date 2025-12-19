@@ -2,14 +2,20 @@
 
 A centralized repository for Claude Code extensions including skills, commands, scripts, and plugins.
 
-## Features
+---
 
-- **Skills** - EPUB reader and PDF-to-Markdown converter for document processing
-- **Plan Saver Plugin** - Automatically saves and distributes plans from Claude Code's plan mode to their respective project directories
-- **Slash Commands** - Custom commands like `/latest-plan` for quick access to recent work
-- **Utility Scripts** - Standalone scripts for plan management and other automation
+## ✨ Features
 
-## Installation
+| Component | Description |
+|-----------|-------------|
+| **Skills** | EPUB reader and PDF-to-Markdown converter for document processing |
+| **Plan Saver Plugin** | Automatically saves plans from plan mode to project directories |
+| **Slash Commands** | `/latest-plan`, `/reflect`, `/handoff` for workflow enhancement |
+| **Utility Scripts** | Standalone scripts for plan management |
+
+---
+
+## 🚀 Installation
 
 ### Quick Setup
 
@@ -38,19 +44,22 @@ This will:
 - Set up the daemon as a launchd service
 - Create the session registry at `~/.claude/.plan-saver/`
 
-## Components
+---
+
+## 📦 Components
 
 ### Plugins
 
-#### plan-saver (v2.0.0)
+#### plan-saver (v2.2.0)
 
 Automatically distributes plans created in Claude Code's plan mode to their respective project directories.
 
 **How it works:**
-- When Claude Code starts, a session is registered with the working directory
-- The daemon watches `~/.claude/plans/` for new plan files
-- When a plan is saved, it's matched to the correct project via session tracking
-- Plans are copied to `{project}/.claude/plans/NNNN-title.md` with auto-incrementing numbers
+1. When Claude Code starts, a session is registered with the working directory
+2. The daemon watches `~/.claude/plans/` for new plan files
+3. When a plan is saved, it's matched to the correct project via session tracking
+4. Plans are copied to `{project}/.claude/plans/NNNN-title.md` with auto-incrementing numbers
+5. When plans are updated, the existing destination is updated (no duplicate files)
 
 **Commands:**
 ```bash
@@ -61,18 +70,21 @@ plugins/plan-saver/status.sh
 plugins/plan-saver/uninstall.sh
 ```
 
+---
+
 ### Skills
 
 #### epub
 
 Read and extract content from EPUB ebook files.
 
-**Capabilities:**
-- View metadata (title, author, publisher, description)
-- List table of contents with chapter references
-- Read specific chapters by number
-- Extract entire book as Markdown
-- Search text with context
+| Capability | Description |
+|------------|-------------|
+| Metadata | View title, author, publisher, description |
+| TOC | List table of contents with chapter references |
+| Read | Read specific chapters by number |
+| Extract | Export entire book as Markdown |
+| Search | Search text with surrounding context |
 
 **Requirements:** Node.js, built with `bun install && bun run build` in `skills/epub/scripts/epub-reader/`
 
@@ -80,13 +92,16 @@ Read and extract content from EPUB ebook files.
 
 Convert PDF documents to clean, structured Markdown for full context loading.
 
-**Capabilities:**
-- Text extraction with formatting preservation (headers, bold, italic, lists)
-- Table extraction using IBM's TableFormer AI (~93.6% accuracy)
-- Image extraction with caching
-- Multi-column layout support
+| Capability | Description |
+|------------|-------------|
+| Text | Formatting preservation (headers, bold, italic, lists) |
+| Tables | IBM TableFormer AI extraction (~93.6% accuracy) |
+| Images | Extraction with caching |
+| Layout | Multi-column support |
 
 **Requirements:** Python 3.11+, virtual environment created automatically on first use
+
+---
 
 ### Commands
 
@@ -94,6 +109,26 @@ Convert PDF documents to clean, structured Markdown for full context loading.
 |---------|-------------|
 | `/latest-plan` | Load the most recent plan from `.claude/plans/` |
 | `/latest-plan <query>` | Find a plan by number or name |
+| `/reflect` | Reflect on session learnings and update CLAUDE.md |
+| `/handoff` | Create a handoff document for session continuity |
+
+#### `/reflect`
+
+Prompts Claude to think carefully about what was learned during the session and update the project's CLAUDE.md with durable, non-obvious, actionable insights for future sessions.
+
+#### `/handoff`
+
+Creates a structured handoff document at `.claude/handoff.md` containing:
+- **Goal** — what you're trying to accomplish
+- **Progress** — what's done, files changed, decisions made
+- **Current State** — where work stopped, any partial work
+- **Remaining Work** — what's left to do
+- **Context** — file paths, patterns, gotchas discovered
+- **Blockers** — anything stuck or needing answers
+
+Start a new session with "Continue from .claude/handoff.md" to pick up where you left off.
+
+---
 
 ### Scripts
 
@@ -102,21 +137,25 @@ Convert PDF documents to clean, structured Markdown for full context loading.
 | `latest-plan.sh` | Find and display the latest plan file |
 | `save-plan.sh` | Save a plan to `.claude/plans/` with auto-numbering |
 
-## Directory Structure
+---
+
+## 📁 Directory Structure
 
 ```
 claude-code-skills-monorepo/
-├── commands/                    # Slash command definitions
-│   └── latest-plan.md
-├── scripts/                     # Utility scripts
+├── commands/                       # Slash command definitions
+│   ├── handoff.md
+│   ├── latest-plan.md
+│   └── reflect.md
+├── scripts/                        # Utility scripts
 │   ├── latest-plan.sh
 │   └── save-plan.sh
-├── skills/                      # Claude Code skills
-│   ├── epub/                    # EPUB reader (TypeScript)
+├── skills/                         # Claude Code skills
+│   ├── epub/                       # EPUB reader (TypeScript)
 │   │   ├── SKILL.md
 │   │   ├── README.md
 │   │   └── scripts/epub-reader/
-│   └── pdf-to-markdown/         # PDF converter (Python)
+│   └── pdf-to-markdown/            # PDF converter (Python)
 │       ├── SKILL.md
 │       ├── README.md
 │       └── scripts/
@@ -132,55 +171,64 @@ claude-code-skills-monorepo/
 │       ├── install.sh
 │       ├── uninstall.sh
 │       └── status.sh
-├── .claude/plans/               # Example plans
 ├── .claude-plugin/
 │   └── marketplace.json
-├── setup.sh                     # Main installation script
-├── CLAUDE.md                    # Project instructions for Claude
+├── setup.sh                        # Main installation script
+├── CLAUDE.md                       # Project instructions for Claude
 └── README.md
 ```
 
-## Adding New Components
+---
+
+## ➕ Adding New Components
 
 ### Adding a Skill
 
-- Create a new directory under `skills/`
-- Add your skill definition `.md` file
-- Run `./setup.sh` to create symlinks
+1. Create a new directory under `skills/`
+2. Add your skill definition `.md` file
+3. Run `./setup.sh` to create symlinks
 
 ### Adding a Command
 
-- Create a `.md` file in `commands/`
-- Run `./setup.sh` to create symlinks
+1. Create a `.md` file in `commands/`
+2. Run `./setup.sh` to create symlinks
 
 ### Adding a Script
 
-- Create your `.sh` script in `scripts/`
-- Make it executable: `chmod +x scripts/your-script.sh`
-- Run `./setup.sh` to create symlinks
+1. Create your `.sh` script in `scripts/`
+2. Make it executable: `chmod +x scripts/your-script.sh`
+3. Run `./setup.sh` to create symlinks
 
-## Shell Script Standards
+---
+
+## 📋 Shell Script Standards
 
 All shell scripts in this repository follow these standards:
 
-- **Defensive mode** - All scripts begin with:
-  ```bash
-  #!/usr/bin/env bash
-  set -euo pipefail
-  ```
-- **Shellcheck compliant** - Run `shellcheck` before committing
-- **Proper quoting** - All variable expansions are quoted
-- **Modern syntax** - Use `[[ ]]` for conditionals
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+```
 
-## Requirements
+- **Shellcheck compliant** — run `shellcheck` before committing
+- **Proper quoting** — all variable expansions are quoted
+- **Modern syntax** — use `[[ ]]` for conditionals
 
-- macOS (for launchd-based daemon)
-- Homebrew (for dependency installation)
-- Claude Code CLI
-- Node.js / Bun (for epub skill)
-- Python 3.11+ (for pdf-to-markdown skill)
+---
 
-## Troubleshooting
+## 📌 Requirements
+
+| Requirement | Purpose |
+|-------------|---------|
+| macOS | launchd-based daemon |
+| Homebrew | dependency installation |
+| Claude Code CLI | core functionality |
+| Node.js / Bun | epub skill |
+| Python 3.11+ | pdf-to-markdown skill |
+
+---
+
+## 🔧 Troubleshooting
 
 ### Daemon not running
 
@@ -202,6 +250,8 @@ launchctl load ~/Library/LaunchAgents/com.claude.plan-saver.plist
 - Check that a session was registered (look in `~/.claude/.plan-saver/sessions.json`)
 - Verify the plan slug matches the session
 
-## License
+---
+
+## 📄 License
 
 MIT
