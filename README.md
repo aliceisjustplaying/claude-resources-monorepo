@@ -19,30 +19,18 @@ A centralized repository for Claude Code extensions including skills, commands, 
 
 ### Quick Setup
 
-Run the setup script to symlink all components to your Claude Code configuration:
+Run the setup script to install everything:
 
 ```bash
 ./setup.sh
 ```
 
-This creates symlinks in `~/.claude/` for:
-- Skills → `~/.claude/skills/`
-- Commands → `~/.claude/commands/`
-- Scripts → `~/.claude/scripts/`
-
-### Plan Saver Plugin
-
-The plan-saver plugin requires additional installation:
-
-```bash
-cd plugins/plan-saver
-./install.sh
-```
-
 This will:
-- Install dependencies (`fswatch`, `jq`) via Homebrew
-- Set up the daemon as a launchd service
-- Create the session registry at `~/.claude/.plan-saver/`
+- Symlink skills → `~/.claude/skills/`
+- Symlink commands → `~/.claude/commands/`
+- Symlink scripts → `~/.claude/scripts/`
+- Symlink plugins → `~/.claude/plugins/`
+- Run plugin installers (e.g., plan-saver daemon setup)
 
 ---
 
@@ -78,12 +66,6 @@ Automatically detects handoff files and prompts Claude to continue previous work
 1. On session start, checks if `.claude/handoff.md` exists in the project
 2. If found, injects a prompt telling Claude to read it and continue
 3. Near-zero overhead when no handoff file exists (~5ms shell check)
-
-**Install:**
-```bash
-cd plugins/handoff
-./install.sh
-```
 
 **Usage:**
 1. Run `/handoff` when context is running low
@@ -185,9 +167,8 @@ claude-code-skills-monorepo/
 │   │   │   └── plugin.json
 │   │   ├── hooks/
 │   │   │   └── hooks.json
-│   │   ├── scripts/
-│   │   │   └── check-handoff.sh
-│   │   └── install.sh
+│   │   └── scripts/
+│   │       └── check-handoff.sh
 │   └── plan-saver/
 │       ├── daemon/
 │       │   └── plan-saver-daemon.sh

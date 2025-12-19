@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Symlinks skills and commands from this monorepo to ~/.claude/
+# Symlinks skills, commands, scripts, and plugins from this monorepo to ~/.claude/
 
 set -euo pipefail
 
 MONOREPO="$(cd "$(dirname "$0")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 
-mkdir -p "$CLAUDE_DIR/skills" "$CLAUDE_DIR/commands" "$CLAUDE_DIR/scripts"
+mkdir -p "$CLAUDE_DIR/skills" "$CLAUDE_DIR/commands" "$CLAUDE_DIR/scripts" "$CLAUDE_DIR/plugins"
 
 # Link skills (each skill is a directory)
 for skill in "$MONOREPO/skills"/*/; do
@@ -53,6 +53,28 @@ for script in "$MONOREPO/scripts"/*.sh "$MONOREPO/scripts"/*.py; do
   fi
   ln -s "$script" "$target"
   echo "Linked: scripts/$name"
+done
+
+# Link plugins (each plugin is a directory)
+for plugin in "$MONOREPO/plugins"/*/; do
+  [ -d "$plugin" ] || continue
+  name=$(basename "$plugin")
+  target="$CLAUDE_DIR/plugins/$name"
+  if [[ -L "$target" ]]; then
+    echo "Updating: $name"
+    rm "$target"
+  elif [[ -e "$target" ]]; then
+    echo "Skipping $name (exists and is not a symlink)"
+    continue
+  fi
+  ln -s "$plugin" "$target"
+  echo "Linked: plugins/$name"
+
+  # Run plugin's install.sh if it exists (for extra setup like daemons)
+  if [[ -x "$plugin/install.sh" ]]; then
+    echo "Running $name installer..."
+    "$plugin/install.sh"
+  fi
 done
 
 echo "Done."
