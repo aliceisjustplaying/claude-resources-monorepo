@@ -70,6 +70,26 @@ plugins/plan-saver/status.sh
 plugins/plan-saver/uninstall.sh
 ```
 
+#### handoff (v1.0.0)
+
+Automatically detects handoff files and prompts Claude to continue previous work.
+
+**How it works:**
+1. On session start, checks if `.claude/handoff.md` exists in the project
+2. If found, injects a prompt telling Claude to read it and continue
+3. Near-zero overhead when no handoff file exists (~5ms shell check)
+
+**Install:**
+```bash
+cd plugins/handoff
+./install.sh
+```
+
+**Usage:**
+1. Run `/handoff` when context is running low
+2. Start a new session — Claude automatically picks up where you left off
+3. Claude deletes the handoff file after absorbing the context
+
 ---
 
 ### Skills
@@ -160,6 +180,14 @@ claude-code-skills-monorepo/
 │       ├── README.md
 │       └── scripts/
 ├── plugins/
+│   ├── handoff/
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   ├── hooks/
+│   │   │   └── hooks.json
+│   │   ├── scripts/
+│   │   │   └── check-handoff.sh
+│   │   └── install.sh
 │   └── plan-saver/
 │       ├── daemon/
 │       │   └── plan-saver-daemon.sh
