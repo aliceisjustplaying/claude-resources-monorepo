@@ -1,6 +1,6 @@
 {
   "name": "handoff",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Automatically detects handoff files and prompts Claude to continue previous work",
   "author": {
     "name": "Alice"
