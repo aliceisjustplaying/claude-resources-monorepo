@@ -24,6 +24,7 @@ This is a monorepo containing Claude Code skills, commands, scripts, and plugins
 │   ├── epub/                    # EPUB ebook reader (TypeScript)
 │   └── pdf-to-markdown/         # PDF to Markdown converter (Python)
 ├── plugins/                     # Claude Code plugins
+│   ├── handoff/                 # Auto-detects handoff files for session continuity
 │   └── plan-saver/              # Auto-distributes plans to projects
 ├── .claude/plans/               # Example plans for this repo
 └── setup.sh                     # Installation script
@@ -49,6 +50,7 @@ This is a monorepo containing Claude Code skills, commands, scripts, and plugins
 - Test scripts manually before committing
 - Keep scripts focused and single-purpose
 - Document all scripts with a comment block at the top explaining purpose
+- **IMPORTANT: Bump the version** in `plugin.json` (or equivalent) whenever you change a plugin or skill
 
 ## Key Files
 
@@ -60,6 +62,7 @@ This is a monorepo containing Claude Code skills, commands, scripts, and plugins
 - `plugins/plan-saver/install.sh` - Installs plan-saver daemon
 - `plugins/plan-saver/daemon/plan-saver-daemon.sh` - Main daemon logic
 - `plugins/plan-saver/hooks/hooks.json` - Session lifecycle hooks
+- `plugins/handoff/hooks/hooks.json` - SessionStart hook for handoff detection
 
 ## Skills
 
