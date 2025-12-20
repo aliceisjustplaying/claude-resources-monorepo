@@ -8,7 +8,7 @@ A centralized repository for Claude Code extensions including skills, commands, 
 
 | Component | Description |
 |-----------|-------------|
-| **Skills** | EPUB reader and PDF-to-Markdown converter for document processing |
+| **Skills** | EPUB reader, PDF-to-Markdown converter, and axe (iOS Simulator control) |
 | **Plan Saver Plugin** | Automatically saves plans from plan mode to project directories |
 | **Slash Commands** | `/latest-plan`, `/reflect`, `/handoff` for workflow enhancement |
 | **Utility Scripts** | Standalone scripts for plan management |
@@ -17,11 +17,28 @@ A centralized repository for Claude Code extensions including skills, commands, 
 
 ## 🚀 Installation
 
-### Quick Setup
+### Option 1: Claude Code Marketplace (Recommended)
 
-Run the setup script to install everything:
+Install plugins using the official Claude Code plugin system:
 
 ```bash
+# Add this repo as a marketplace
+/plugin marketplace add aliceisjustplaying/claude-resources-monorepo
+
+# Install plugins
+/plugin install plan-saver@alice-marketplace
+/plugin install handoff@alice-marketplace
+```
+
+**Note:** Skills (epub, pdf-to-markdown, axe) are not distributed via marketplaces. See "Installing Skills" below.
+
+### Option 2: Clone + Setup Script (Full Access)
+
+For developers who want everything, or to contribute:
+
+```bash
+git clone https://github.com/aliceisjustplaying/claude-resources-monorepo.git
+cd claude-resources-monorepo
 ./setup.sh
 ```
 
@@ -31,6 +48,26 @@ This will:
 - Symlink scripts → `~/.claude/scripts/`
 - Symlink plugins → `~/.claude/plugins/`
 - Run plugin installers (e.g., plan-saver daemon setup)
+
+### Installing Skills
+
+Skills must be copied or symlinked manually. Choose one:
+
+**Personal use (available in all your projects):**
+```bash
+# Clone the repo, then symlink specific skills
+ln -s /path/to/claude-code-skills-monorepo/skills/epub ~/.claude/skills/epub
+ln -s /path/to/claude-code-skills-monorepo/skills/pdf-to-markdown ~/.claude/skills/pdf-to-markdown
+ln -s /path/to/claude-code-skills-monorepo/skills/axe ~/.claude/skills/axe
+```
+
+**Per-project (shared with collaborators via git):**
+```bash
+# Copy a skill into your project
+cp -r /path/to/claude-code-skills-monorepo/skills/epub .claude/skills/
+git add .claude/skills/epub
+git commit -m "Add epub skill"
+```
 
 ---
 
@@ -103,6 +140,20 @@ Convert PDF documents to clean, structured Markdown for full context loading.
 
 **Requirements:** Python 3.11+, virtual environment created automatically on first use
 
+#### axe
+
+Control iOS Simulators via accessibility APIs for UI automation and testing.
+
+| Capability | Description |
+|------------|-------------|
+| describe-ui | Get the full accessibility tree |
+| tap | Tap by accessibility label, ID, or coordinates |
+| type | Type text into focused element |
+| swipe | Swipe gestures with start/end coordinates |
+| button | Hardware buttons (home, lock) |
+
+**Requirements:** Xcode, `axe` CLI in PATH
+
 ---
 
 ### Commands
@@ -153,6 +204,8 @@ claude-code-skills-monorepo/
 │   ├── latest-plan.sh
 │   └── save-plan.sh
 ├── skills/                         # Claude Code skills
+│   ├── axe/                        # iOS Simulator control
+│   │   └── SKILL.md
 │   ├── epub/                       # EPUB reader (TypeScript)
 │   │   ├── SKILL.md
 │   │   ├── README.md
