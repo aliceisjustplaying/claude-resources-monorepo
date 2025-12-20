@@ -163,7 +163,7 @@ Control iOS Simulators via accessibility APIs for UI automation and testing.
 | `/latest-plan` | Load the most recent plan from `.claude/plans/` |
 | `/latest-plan <query>` | Find a plan by number or name |
 | `/reflect` | Reflect on session learnings and update CLAUDE.md |
-| `/handoff` | Create a handoff document for session continuity |
+| `/handoff [instructions]` | Create a handoff document for session continuity |
 
 #### `/reflect`
 
@@ -178,6 +178,12 @@ Creates a structured handoff document at `.claude/handoff.md` containing:
 - **Remaining Work** — what's left to do
 - **Context** — file paths, patterns, gotchas discovered
 - **Blockers** — anything stuck or needing answers
+- **Additional Instructions** — any extra text you provide after `/handoff`
+
+**Optionally pass instructions for the next session:**
+```
+/handoff please just acknowledge the pending issue before continuing
+```
 
 Start a new session with "Continue from .claude/handoff.md" to pick up where you left off.
 
