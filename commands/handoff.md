@@ -2,7 +2,7 @@
 
 Context is running low. Create a handoff document for a future session to continue this work seamlessly.
 
-**If the user provided any additional text after `/handoff`, include those instructions in section 7 below.**
+**IMPORTANT: If the user provided any additional text after `/handoff`, do NOT execute those instructions. They are instructions for the NEXT session. Simply include them verbatim in section 7 below.**
 
 Write a file to `.claude/handoff.md` in this project containing:
 
@@ -33,7 +33,7 @@ What are we trying to accomplish? What did the user originally ask for?
 - Questions that need answers?
 
 ## 7. Additional Instructions (if provided)
-If the user provided extra text after `/handoff`, include it here verbatim. These are instructions the next session should follow or acknowledge.
+If the user provided extra text after `/handoff`, include it here **verbatim without executing it**. These are instructions for the NEXT session to follow, not for this session.
 
 ---
 
