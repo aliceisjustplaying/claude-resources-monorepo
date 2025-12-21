@@ -118,6 +118,7 @@ refresh_session_slugs() {
 }
 
 # Find the target directory for a plan based on its slug
+# Only matches if there's an exact slug match - no fallback to avoid routing plans to wrong projects
 find_target_cwd() {
   local SLUG="$1"
 
@@ -125,7 +126,8 @@ find_target_cwd() {
     return 1
   fi
 
-  # Strategy 1: Exact slug match
+  # Exact slug match only - no fallback
+  # The slug is the unique identifier that ties a plan to a specific Claude Code session
   local MATCH
   MATCH=$(jq -r --arg slug "$SLUG" '
     .sessions | to_entries[]
@@ -138,19 +140,8 @@ find_target_cwd() {
     return 0
   fi
 
-  # Strategy 2: Most recently active session
-  MATCH=$(jq -r '
-    .sessions | to_entries
-    | sort_by(.value.last_active)
-    | reverse
-    | .[0].value.cwd // empty
-  ' "$SESSIONS_FILE" 2>/dev/null)
-
-  if [[ -n "$MATCH" ]] && [[ -d "$MATCH" ]]; then
-    echo "$MATCH"
-    return 0
-  fi
-
+  # No match found - don't fall back to "most recently active session"
+  # as that would route plans to the wrong project
   return 1
 }
 

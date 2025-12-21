@@ -1,6 +1,6 @@
 {
   "name": "plan-saver",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Automatically saves plans from plan mode to your repo's .claude/plans/ directory with numbered filenames",
   "author": {
     "name": "Alice"
