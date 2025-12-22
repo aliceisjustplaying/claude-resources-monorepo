@@ -5,6 +5,7 @@
 This is a monorepo containing Claude Code skills, commands, scripts, and plugins. Key components include:
 - **Skills** - EPUB reader and PDF-to-Markdown converter
 - **plan-saver plugin** - Automatically distributes plans from Claude Code's plan mode to their respective project directories
+- **Codex compatibility** - `setup.sh` also installs user-level Codex skills/scripts and generates Codex prompts from commands
 
 ## Tech Stack
 
@@ -54,7 +55,7 @@ This is a monorepo containing Claude Code skills, commands, scripts, and plugins
 
 ## Key Files
 
-- `setup.sh` - Symlinks skills/commands/scripts to `~/.claude/`
+- `setup.sh` - Symlinks skills/commands/scripts to `~/.claude/` and user-level Codex skills/scripts; generates Codex prompts
 - `skills/epub/SKILL.md` - EPUB skill definition
 - `skills/epub/scripts/epub-reader/src/index.ts` - EPUB reader CLI implementation
 - `skills/pdf-to-markdown/SKILL.md` - PDF skill definition
@@ -93,7 +94,7 @@ Converts PDF documents to structured Markdown. Capabilities include:
 
 ### New Command
 - Add `.md` file to `commands/`
-- Run `./setup.sh` to symlink
+- Run `./setup.sh` to symlink and generate Codex prompts (`~/.codex/prompts`)
 
 ### New Script
 - Add `.sh` file to `scripts/`

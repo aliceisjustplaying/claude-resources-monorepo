@@ -47,6 +47,9 @@ This will:
 - Symlink commands → `~/.claude/commands/`
 - Symlink scripts → `~/.claude/scripts/`
 - Symlink plugins → `~/.claude/plugins/`
+- Symlink skills → `~/.codex/skills/`
+- Symlink scripts → `~/.codex/scripts/`
+- Generate Codex prompts from `commands/*.md` → `~/.codex/prompts/`
 - Run plugin installers (e.g., plan-saver daemon setup)
 
 ### Installing Skills
@@ -59,6 +62,11 @@ Skills must be copied or symlinked manually. Choose one:
 ln -s /path/to/claude-code-skills-monorepo/skills/epub ~/.claude/skills/epub
 ln -s /path/to/claude-code-skills-monorepo/skills/pdf-to-markdown ~/.claude/skills/pdf-to-markdown
 ln -s /path/to/claude-code-skills-monorepo/skills/axe ~/.claude/skills/axe
+
+# Codex (user-level)
+ln -s /path/to/claude-code-skills-monorepo/skills/epub ~/.codex/skills/epub
+ln -s /path/to/claude-code-skills-monorepo/skills/pdf-to-markdown ~/.codex/skills/pdf-to-markdown
+ln -s /path/to/claude-code-skills-monorepo/skills/axe ~/.codex/skills/axe
 ```
 
 **Per-project (shared with collaborators via git):**
@@ -68,6 +76,8 @@ cp -r /path/to/claude-code-skills-monorepo/skills/epub .claude/skills/
 git add .claude/skills/epub
 git commit -m "Add epub skill"
 ```
+
+> Codex supports repo-local skills in `.codex/skills/` if you prefer to check them into a project instead.
 
 ---
 
@@ -164,6 +174,13 @@ Control iOS Simulators via accessibility APIs for UI automation and testing.
 | `/latest-plan <query>` | Find a plan by number or name |
 | `/reflect` | Reflect on session learnings and update CLAUDE.md |
 | `/handoff [instructions]` | Create a handoff document for session continuity |
+
+**Codex compatibility:** This repo also supports Codex “slash commands” via custom prompts. Running `./setup.sh` will generate prompt files in `~/.codex/prompts/` from the `commands/*.md` files, with `.claude` paths rewritten to `.codex`. Use them in Codex as:
+```
+/prompts:latest-plan
+/prompts:reflect
+/prompts:handoff
+```
 
 #### `/reflect`
 
